@@ -5,10 +5,12 @@ package io.seqera.debug;
  */
 
 import java.lang.instrument.Instrumentation;
-import java.lang.reflect.Method;
 
+import io.seqera.debug.advice.AllocateMemAdvice;
+import io.seqera.debug.advice.FreeMemAdvice;
 import net.bytebuddy.agent.builder.AgentBuilder;
 import net.bytebuddy.asm.Advice;
+import net.bytebuddy.asm.AsmVisitorWrapper;
 import net.bytebuddy.matcher.ElementMatchers;
 import static net.bytebuddy.matcher.ElementMatchers.isPublic;
 import static net.bytebuddy.matcher.ElementMatchers.named;
@@ -23,24 +25,19 @@ public class UnsafeTracerAgent {
                 .with(AgentBuilder.RedefinitionStrategy.RETRANSFORMATION)
                 .disableClassFormatChanges()
                 .type(ElementMatchers.named("sun.misc.Unsafe"))
-                .transform((builder, typeDescription, classLoader, module, domain) -> {
-                    return builder
-                            .visit(Advice.to(MyAdvice.class) .on(named("allocateMemory").and(isPublic())))
-                            ;
-                })
+                .transform( allocMemXform() )
+                .transform( freeMemXform() )
                 .installOn(inst);
     }
 
-    static public class MyAdvice {
-
-        @Advice.OnMethodEnter
-        public static void before(@Advice.This Object thisObj, @Advice.Origin Method method, @Advice.AllArguments Object[] args) {
-            System.err.println("Entering method: " + method + " with arguments: " + java.util.Arrays.toString(args));
-        }
-
-        @Advice.OnMethodExit
-        public static void after(@Advice.Origin String method, @Advice.Return Object returnValue) {
-            System.err.println("Exiting method: " + method + " with return value: " + returnValue);
-        }
+    static AgentBuilder.Transformer allocMemXform() {
+        AsmVisitorWrapper.ForDeclaredMethods adv = Advice.to(AllocateMemAdvice.class) .on(named("allocateMemory").and(isPublic()));
+        return (builder, typeDescription, classLoader, module, domain) -> builder.visit(adv);
     }
+
+    static AgentBuilder.Transformer freeMemXform() {
+        AsmVisitorWrapper.ForDeclaredMethods adv = Advice.to(FreeMemAdvice.class) .on(named("freeMemory").and(isPublic()));
+        return (builder, typeDescription, classLoader, module, domain) -> builder.visit(adv);
+    }
+
 }
