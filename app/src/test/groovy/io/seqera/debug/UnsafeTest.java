@@ -7,8 +7,6 @@ import sun.misc.Unsafe;
 public class UnsafeTest {
     public static void main(String[] args) throws Exception {
 
-        System.out.println("Page size: " + Unsafe.getUnsafe().pageSize());
-
         Field unsafeField = Unsafe.class.getDeclaredField("theUnsafe");
         unsafeField.setAccessible(true);
         Unsafe unsafe = (Unsafe) unsafeField.get(null);
