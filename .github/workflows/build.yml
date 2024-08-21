@@ -1,4 +1,4 @@
-name: rnaseq-nf
+name: unsafe-tracker
 # This workflow is triggered on pushes to the repository.
 on: [push]
 
@@ -33,4 +33,23 @@ jobs:
       - name: Tests
         run: |
           ./gradlew check
+
+      - name: Release
+        if: "contains(github.event.head_commit.message, '[release]')"
+        run: |
+          bash publish.sh unsafe-tracker
+        env:
+          GRADLE_OPTS: '-Dorg.gradle.daemon=false'
+          AWS_ACCESS_KEY_ID: ${{secrets.TOWER_CI_AWS_ACCESS}}
+          AWS_SECRET_ACCESS_KEY: ${{secrets.TOWER_CI_AWS_SECRET}}
+          AWS_DEFAULT_REGION: 'eu-west-1'
+          PUBLISH_REPO_URL: "s3://maven.seqera.io/releases"
+
+      - name: Publish tests report
+        if: failure()
+        uses: actions/upload-artifact@v3
+        with:
+          name: test-reports-jdk-${{ matrix.java_version }}
+          path: |
+            **/build/reports/tests/test
 ...

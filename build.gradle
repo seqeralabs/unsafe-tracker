@@ -12,6 +12,7 @@ plugins {
     // Apply the application plugin to add support for building a CLI application in Java.
     id 'application'
     id "com.github.johnrengelman.shadow" version "8.1.1"
+    id 'maven-publish'
 }
 
 repositories {
@@ -46,6 +47,7 @@ tasks.named('test') {
     useJUnitPlatform()
 }
 
+group = 'io.seqera'
 version = rootProject.file('VERSION').text.trim()
 
 application {
@@ -66,5 +68,23 @@ shadowJar {
                 'Implementation-Version': project.version,
                 'Can-Retransform-Classes': 'true'
         )
+    }
+}
+
+publishing {
+    repositories {
+        maven {
+            name = "SeqeraRepository"
+            url = project.findProperty('publish_repo_url') ?: System.getenv('PUBLISH_REPO_URL') ?: "s3://maven.seqera.io/snapshots"
+            credentials(AwsCredentials) {
+                accessKey = project.findProperty('aws_access_key_id') ?: System.getenv('AWS_ACCESS_KEY_ID')
+                secretKey = project.findProperty('aws_secret_access_key') ?: System.getenv('AWS_SECRET_ACCESS_KEY')
+            }
+        }
+    }
+    publications {
+        maven(MavenPublication) {
+            from(components.java)
+        }
     }
 }

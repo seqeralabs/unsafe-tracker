@@ -11,4 +11,3 @@ plugins {
 }
 
 rootProject.name = 'unsafe-tracker'
-include('app')
