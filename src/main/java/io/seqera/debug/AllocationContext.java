@@ -62,8 +62,13 @@ public class AllocationContext {
     static String dumpStack() {
         StringBuilder result = new StringBuilder();
         StackTraceElement[] stack = Thread.currentThread().getStackTrace();
-        for (StackTraceElement s : stack) {
-            result.append("  " + s).append('\n');
+        for (int i=0; i<stack.length; i++) {
+            if( i==0 )
+                continue;
+            String it = stack[i].toString();
+            if( it.startsWith(AllocationContext.class.getName()))
+                continue;
+            result.append("  " + it).append('\n');
         }
         return result.toString();
     }

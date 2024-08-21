@@ -24,17 +24,22 @@ import static net.bytebuddy.matcher.ElementMatchers.named;
 public class UnsafeTracerAgent {
 
     public static void premain(String agentArgs, Instrumentation inst) {
-        System.err.println("=== Starting UnsafeTracerAgent premain ===");
+        System.out.println("=== Starting UnsafeTracerAgent premain === args: " + agentArgs);
 
-        new AgentBuilder.Default()
+        AgentBuilder agent = new AgentBuilder.Default()
                 .ignore(ElementMatchers.none())
                 .with(AgentBuilder.RedefinitionStrategy.RETRANSFORMATION)
                 .disableClassFormatChanges()
-                .type(ElementMatchers.named("sun.misc.Unsafe")
-                        .or(ElementMatchers.named("jdk.internal.misc.Unsafe")))
+                .type(ElementMatchers.named("jdk.internal.misc.Unsafe"))
                 .transform( allocMemXform() )
-                .transform( freeMemXform() )
-                .installOn(inst);
+                .transform( freeMemXform() );
+
+        if( agentArgs!=null && agentArgs.contains("debug")) {
+            agent = agent.with(new AgentBuilder.Listener.StreamWriting(System.out));
+        }
+
+        // finally install the agent
+        agent.installOn(inst);
     }
 
     static AgentBuilder.Transformer allocMemXform() {
