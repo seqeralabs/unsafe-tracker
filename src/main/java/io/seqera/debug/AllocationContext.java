@@ -59,7 +59,7 @@ public class AllocationContext {
                 '}';
     }
 
-    static String dumpStack() {
+    public static String dumpStack() {
         StringBuilder result = new StringBuilder();
         StackTraceElement[] stack = Thread.currentThread().getStackTrace();
         for (int i=0; i<stack.length; i++) {

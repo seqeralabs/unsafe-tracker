@@ -48,7 +48,12 @@ public class LeaksManager {
 
     static public void unregister(Long address) {
         AllocationContext context = leaks.remove(address);
-        System.out.printf("^^ releasing: %s; size: %,d; address: %,d; createdAt: %s\n", context.name, context.size, context.address, context.createdAt);
+        if( context != null ) {
+            System.out.printf("^^ releasing: %s; size: %,d; address: %,d; createdAt: %s\n", context.name, context.size, context.address, context.createdAt);
+        }
+        else {
+            System.out.printf("^^ releasing untracked address: %,d; stack: %s\n", address, AllocationContext.dumpStack());
+        }
     }
 
     static void dumpAllLeaks() {
