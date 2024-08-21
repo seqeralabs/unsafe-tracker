@@ -1,7 +1,7 @@
 package io.seqera.debug.advice;
 
-import io.seqera.debug.Context;
-import io.seqera.debug.Leaks;
+import io.seqera.debug.AllocationContext;
+import io.seqera.debug.LeaksManager;
 import net.bytebuddy.asm.Advice;
 
 /**
@@ -11,12 +11,12 @@ public class AllocateMemAdvice {
 
     @Advice.OnMethodEnter
     public static void before(@Advice.Argument(0) long size) {
-        Context.create("Unsafe.allocateMemory", size);
+        AllocationContext.create("Unsafe.allocateMemory", size);
     }
 
     @Advice.OnMethodExit
     public static void after(@Advice.Return long address) {
-        Leaks.register(address, Context.get().withAddress(address));
+        LeaksManager.register(address, AllocationContext.get().withAddress(address));
     }
 
 }

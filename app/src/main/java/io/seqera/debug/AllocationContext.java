@@ -3,33 +3,54 @@ package io.seqera.debug;
 import java.time.Instant;
 
 /**
+ * Model a off-heap memory allocation context
+ *
  * @author Paolo Di Tommaso <paolo.ditommaso@gmail.com>
  */
-public class Context {
+public class AllocationContext {
 
-    static final ThreadLocal<Context> instance = new ThreadLocal<>();
+    static final ThreadLocal<AllocationContext> instance = new ThreadLocal<>();
 
+    /**
+     * The name of method used to allocate the memory
+     */
     String name;
+
+    /**
+     * The size of the allocated memoty in bytes
+     */
     long size;
+
+    /**
+     * The instant when the allocation happened
+     */
     Instant createdAt;
+
+    /**
+     * The stack trace at the allocation point
+     */
     String stackTrace;
+
+    /**
+     * The address of the memory allocated
+     */
     long address;
 
-    Context(String name, long size, Instant ts, String stackTrace) {
+    AllocationContext(String name, long size, Instant ts, String stackTrace) {
         this.name = name;
         this.size = size;
         this.createdAt = ts;
         this.stackTrace = stackTrace;
     }
 
-    public Context withAddress(long address) {
+    public AllocationContext withAddress(long address) {
         this.address = address;
         return this;
     }
 
     @Override
     public String toString() {
-        return "Context{" +
+        return "AllocationContext{" +
                 "name=" + name +
                 ", size=" + size +
                 ", address=" + address +
@@ -48,12 +69,12 @@ public class Context {
     }
 
     public static void create(String name, long size) {
-        Context context = new Context(name, size, Instant.now(), dumpStack());
+        AllocationContext context = new AllocationContext(name, size, Instant.now(), dumpStack());
         instance.set(context);
     }
 
-    public static Context get() {
-        Context result = instance.get();
+    public static AllocationContext get() {
+        AllocationContext result = instance.get();
         instance.remove();
         return result;
     }

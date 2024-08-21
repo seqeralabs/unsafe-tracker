@@ -1,6 +1,9 @@
 package io.seqera.debug;
 
 /**
+ * Implement a Java agent able to track usage of off-heap memory made via
+ * {@link sun.misc.Unsafe} and {@linl jdk.internal.misc.Unsafe} classes
+ *
  * @author Paolo Di Tommaso <paolo.ditommaso@gmail.com>
  */
 
@@ -15,6 +18,9 @@ import net.bytebuddy.matcher.ElementMatchers;
 import static net.bytebuddy.matcher.ElementMatchers.isPublic;
 import static net.bytebuddy.matcher.ElementMatchers.named;
 
+/**
+ * The agent entry point
+ */
 public class UnsafeTracerAgent {
 
     public static void premain(String agentArgs, Instrumentation inst) {

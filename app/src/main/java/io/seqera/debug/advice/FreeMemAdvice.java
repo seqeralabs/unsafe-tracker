@@ -1,6 +1,6 @@
 package io.seqera.debug.advice;
 
-import io.seqera.debug.Leaks;
+import io.seqera.debug.LeaksManager;
 import net.bytebuddy.asm.Advice;
 
 /**
@@ -10,7 +10,7 @@ public class FreeMemAdvice {
 
     @Advice.OnMethodEnter
     public static void before(@Advice.Argument(0) long address) {
-        Leaks.unregister(address);
+        LeaksManager.unregister(address);
     }
 
 }
