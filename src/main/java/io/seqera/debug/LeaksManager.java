@@ -17,6 +17,8 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class LeaksManager {
 
+    static final long _10_MB = 10 * 1024 * 1024;
+
     static final private Map<Long, AllocationContext> leaks = new ConcurrentHashMap<>();
 
     static final private Timer timer = new Timer(true);
@@ -42,14 +44,16 @@ public class LeaksManager {
     }
 
     static public void register(Long address, AllocationContext context) {
-        System.out.printf("^^ tracing: %s; size: %,d; address: %,d; createdAt: %s\n", context.name, context.size, context.address, context.createdAt);
+        if( context.size>_10_MB )
+            System.out.printf("^^ tracing: %s; size: %,d; address: %,d; createdAt: %s\n", context.name, context.size, context.address, context.createdAt);
         leaks.put(address, context);
     }
 
     static public void unregister(Long address) {
         AllocationContext context = leaks.remove(address);
         if( context != null ) {
-            System.out.printf("^^ releasing: %s; size: %,d; address: %,d; createdAt: %s\n", context.name, context.size, context.address, context.createdAt);
+            if( context.size>_10_MB )
+                System.out.printf("^^ releasing: %s; size: %,d; address: %,d; createdAt: %s\n", context.name, context.size, context.address, context.createdAt);
         }
         else {
             System.out.printf("^^ releasing untracked address: %,d; stack: %s\n", address, AllocationContext.dumpStack());
@@ -64,39 +68,37 @@ public class LeaksManager {
 
         StringBuilder result = new StringBuilder();
         int count=0;
-        for (AllocationContext it: leaks.values()) {
+        List<AllocationContext> list = new ArrayList<>(leaks.values());
+        for (AllocationContext it: list) {
             result.append("* LEAK " + (++count) + ": " + it.toString() + "\n");
         }
 
-        System.out.println(summary(0));
+        System.out.println(summary(list, 0));
         System.out.println(result);
     }
 
     static void dumpSuspectLeaks(Duration duration, int size) {
         int count=0;
-        int omitted=0;
         StringBuilder result = new StringBuilder();
-        for (AllocationContext it: findOlderThan(leaks.values(), duration)) {
+        final List<AllocationContext> copy = new ArrayList<>(leaks.values());
+        for (AllocationContext it: findOlderThan(copy, duration)) {
             if( size==0 || it.size>size ) {
                 result.append("* LEAK " + (++count) + ": " + it + "\n");
             }
-            else {
-                omitted++;
-            }
         }
 
-        System.out.println(summary(omitted));
+        int omitted = copy.size()-count;
+        System.out.println(summary(copy, omitted));
         System.out.println(result);
     }
 
-    static String summary(int omitted) {
-        int count=0;
-        int total=0;
-        for (AllocationContext it : leaks.values()) {
+    static String summary(List<AllocationContext> list, int omitted) {
+        long total=0;
+        for (AllocationContext it : list) {
             total += it.size;
         }
 
-        return String.format("* SUMMARY: %,d suspect leaks; %,d omitted; %,d retained memory", count, omitted, total);
+        return String.format("* LEAKS SUMMARY: %,d suspect leaks; %,d omitted; %,d retained memory", list.size(), omitted, total);
     }
 
     static List<AllocationContext> findOlderThan(Collection<AllocationContext> all, Duration duration) {
