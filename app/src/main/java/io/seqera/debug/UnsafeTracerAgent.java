@@ -24,7 +24,8 @@ public class UnsafeTracerAgent {
                 .ignore(ElementMatchers.none())
                 .with(AgentBuilder.RedefinitionStrategy.RETRANSFORMATION)
                 .disableClassFormatChanges()
-                .type(ElementMatchers.named("sun.misc.Unsafe"))
+                .type(ElementMatchers.named("sun.misc.Unsafe")
+                        .or(ElementMatchers.named("jdk.internal.misc.Unsafe")))
                 .transform( allocMemXform() )
                 .transform( freeMemXform() )
                 .installOn(inst);
