@@ -1,7 +1,6 @@
 package io.seqera.debug.advice;
 
-import java.lang.reflect.Method;
-
+import io.seqera.debug.Leaks;
 import net.bytebuddy.asm.Advice;
 
 /**
@@ -10,13 +9,8 @@ import net.bytebuddy.asm.Advice;
 public class FreeMemAdvice {
 
     @Advice.OnMethodEnter
-    public static void before(@Advice.This Object thisObj, @Advice.Origin Method method, @Advice.AllArguments Object[] args) {
-        System.err.println("Entering method: " + method + " with arguments: " + java.util.Arrays.toString(args));
-    }
-
-    @Advice.OnMethodExit
-    public static void after(@Advice.This Object thisObj, @Advice.Origin Method method) {
-        System.err.println("Exiting method: " + method + " with void return" );
+    public static void before(@Advice.Argument(0) long address) {
+        Leaks.unregister(address);
     }
 
 }

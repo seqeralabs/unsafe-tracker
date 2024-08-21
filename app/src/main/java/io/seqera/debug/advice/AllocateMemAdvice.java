@@ -1,7 +1,7 @@
 package io.seqera.debug.advice;
 
-import java.lang.reflect.Method;
-
+import io.seqera.debug.Context;
+import io.seqera.debug.Leaks;
 import net.bytebuddy.asm.Advice;
 
 /**
@@ -10,13 +10,13 @@ import net.bytebuddy.asm.Advice;
 public class AllocateMemAdvice {
 
     @Advice.OnMethodEnter
-    public static void before(@Advice.This Object thisObj, @Advice.Origin Method method, @Advice.AllArguments Object[] args) {
-        System.err.println("Entering method: " + method + " with arguments: " + java.util.Arrays.toString(args));
+    public static void before(@Advice.Argument(0) long size) {
+        Context.create("Unsafe.allocateMemory", size);
     }
 
     @Advice.OnMethodExit
-    public static void after(@Advice.This Object thisObj, @Advice.Origin Method method, @Advice.Return Object returnValue) {
-        System.err.println("Exiting method: " + method + " with return value: " + returnValue);
+    public static void after(@Advice.Return long address) {
+        Leaks.register(address, Context.get().withAddress(address));
     }
 
 }

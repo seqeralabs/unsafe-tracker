@@ -14,7 +14,7 @@ public class UnsafeTest {
         long memoryAddress = unsafe.allocateMemory(1024);
         System.out.println("Memory allocated at: " + memoryAddress);
 
-        unsafe.freeMemory(memoryAddress);
-        System.out.println("Memory freed.");
+//        unsafe.freeMemory(memoryAddress);
+//        System.out.println("Memory freed.");
     }
 }
