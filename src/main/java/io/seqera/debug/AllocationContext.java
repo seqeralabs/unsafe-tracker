@@ -9,43 +9,37 @@ import java.time.Instant;
  */
 public class AllocationContext {
 
-    static final ThreadLocal<AllocationContext> instance = new ThreadLocal<>();
-
     /**
      * The name of method used to allocate the memory
      */
-    String name;
+    final String name;
 
     /**
      * The size of the allocated memoty in bytes
      */
-    long size;
+    final long size;
 
     /**
      * The instant when the allocation happened
      */
-    Instant createdAt;
+    final Instant createdAt;
 
     /**
      * The stack trace at the allocation point
      */
-    String stackTrace;
+    final String stackTrace;
 
     /**
      * The address of the memory allocated
      */
-    long address;
+    final long address;
 
-    AllocationContext(String name, long size, Instant ts, String stackTrace) {
+    AllocationContext(String name, long size, long address, Instant ts, String stackTrace) {
         this.name = name;
         this.size = size;
+        this.address = address;
         this.createdAt = ts;
         this.stackTrace = stackTrace;
-    }
-
-    public AllocationContext withAddress(long address) {
-        this.address = address;
-        return this;
     }
 
     @Override
@@ -73,14 +67,13 @@ public class AllocationContext {
         return result.toString();
     }
 
-    public static void create(String name, long size) {
-        AllocationContext context = new AllocationContext(name, size, Instant.now(), dumpStack());
-        instance.set(context);
+    public static AllocationContext create(String name, long size, long address) {
+        return new AllocationContext(
+                name,
+                size,
+                address,
+                Instant.now(),
+                dumpStack());
     }
 
-    public static AllocationContext get() {
-        AllocationContext result = instance.get();
-        instance.remove();
-        return result;
-    }
 }

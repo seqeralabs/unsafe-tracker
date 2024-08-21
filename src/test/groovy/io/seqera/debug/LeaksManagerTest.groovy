@@ -14,9 +14,9 @@ class LeaksManagerTest extends Specification {
     def 'should find all leaks older than specified duration' (){
         given:
         def all = [
-                new AllocationContext('foo', 1000, Instant.now().minusMillis(20_000), null),
-                new AllocationContext('foo', 1000, Instant.now().minusMillis(10_000), null),
-                new AllocationContext('foo', 1000, Instant.now().minusMillis(1_000), null),
+                new AllocationContext('foo', 1000, 1,  Instant.now().minusMillis(20_000), null),
+                new AllocationContext('foo', 1000, 2, Instant.now().minusMillis(10_000), null),
+                new AllocationContext('foo', 1000, 3, Instant.now().minusMillis(1_000), null),
         ]
 
         when:
