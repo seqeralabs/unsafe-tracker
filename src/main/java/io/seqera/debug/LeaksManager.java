@@ -30,7 +30,7 @@ public class LeaksManager {
         timer.scheduleAtFixedRate(new TimerTask() {
             @Override
             public void run() {
-                dumpSuspectLeaks(Duration.ofMinutes(1));
+                dumpSuspectLeaks(Duration.ofMinutes(5), 1024 * 1024);
             }
         }, 1_000, 10_000);  // Initial delay 0 ms, repeat every 10,000 ms (10 seconds)
 
@@ -59,6 +59,7 @@ public class LeaksManager {
     static void dumpAllLeaks() {
         if (leaks.isEmpty()) {
             System.out.println("^^ no leaks detected");
+            return;
         }
 
         StringBuilder result = new StringBuilder();
@@ -66,16 +67,36 @@ public class LeaksManager {
         for (AllocationContext it: leaks.values()) {
             result.append("* LEAK " + (++count) + ": " + it.toString() + "\n");
         }
+
+        System.out.println(summary(0));
         System.out.println(result);
     }
 
-    static void dumpSuspectLeaks(Duration duration) {
+    static void dumpSuspectLeaks(Duration duration, int size) {
         int count=0;
+        int omitted=0;
         StringBuilder result = new StringBuilder();
-        for (AllocationContext it: findOlderThan(leaks.values(), Duration.ofMinutes(1))) {
-            result.append("* LEAK " + (++count) + ": " + it + "\n");
+        for (AllocationContext it: findOlderThan(leaks.values(), duration)) {
+            if( size==0 || it.size>size ) {
+                result.append("* LEAK " + (++count) + ": " + it + "\n");
+            }
+            else {
+                omitted++;
+            }
         }
+
+        System.out.println(summary(omitted));
         System.out.println(result);
+    }
+
+    static String summary(int omitted) {
+        int count=0;
+        int total=0;
+        for (AllocationContext it : leaks.values()) {
+            total += it.size;
+        }
+
+        return String.format("* SUMMARY: %,d suspect leaks; %,d omitted; %,d retained memory", count, omitted, total);
     }
 
     static List<AllocationContext> findOlderThan(Collection<AllocationContext> all, Duration duration) {
