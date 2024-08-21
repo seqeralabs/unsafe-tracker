@@ -5,15 +5,14 @@ package io.seqera.debug;
  */
 
 import java.lang.instrument.Instrumentation;
+import java.util.concurrent.Callable;
 
-import io.seqera.debug.advice.AllocateMemAdvice;
-import io.seqera.debug.advice.FreeMemAdvice;
 import net.bytebuddy.agent.builder.AgentBuilder;
-import net.bytebuddy.asm.Advice;
-import net.bytebuddy.asm.AsmVisitorWrapper;
+import net.bytebuddy.implementation.MethodDelegation;
+import net.bytebuddy.implementation.bind.annotation.Argument;
+import net.bytebuddy.implementation.bind.annotation.RuntimeType;
+import net.bytebuddy.implementation.bind.annotation.SuperCall;
 import net.bytebuddy.matcher.ElementMatchers;
-import static net.bytebuddy.matcher.ElementMatchers.isPublic;
-import static net.bytebuddy.matcher.ElementMatchers.named;
 
 public class UnsafeTracerAgent {
 
@@ -25,19 +24,22 @@ public class UnsafeTracerAgent {
                 .with(AgentBuilder.RedefinitionStrategy.RETRANSFORMATION)
                 .disableClassFormatChanges()
                 .type(ElementMatchers.named("sun.misc.Unsafe"))
-                .transform( allocMemXform() )
-                .transform( freeMemXform() )
+                .transform((builder, typeDescription, classLoader, module, domain) -> builder
+                        .method(ElementMatchers.named("allocateMemory")
+                                .and(ElementMatchers.isPublic()))
+                        .intercept(MethodDelegation.to(AllocMemWrapper.class)))
+                .with(new AgentBuilder.Listener.StreamWriting(System.out))
                 .installOn(inst);
     }
 
-    static AgentBuilder.Transformer allocMemXform() {
-        AsmVisitorWrapper.ForDeclaredMethods adv = Advice.to(AllocateMemAdvice.class) .on(named("allocateMemory").and(isPublic()));
-        return (builder, typeDescription, classLoader, module, domain) -> builder.visit(adv);
-    }
-
-    static AgentBuilder.Transformer freeMemXform() {
-        AsmVisitorWrapper.ForDeclaredMethods adv = Advice.to(FreeMemAdvice.class) .on(named("freeMemory").and(isPublic()));
-        return (builder, typeDescription, classLoader, module, domain) -> builder.visit(adv);
+    static public class AllocMemWrapper {
+        @RuntimeType
+        public static Long intercept(@SuperCall Callable<Long> zuper, @Argument(0) long value) throws Exception {
+            System.out.println("== Before method with argument: " + value);
+            //long result = zuper.call();  // Invoke the original method
+            System.out.println("== After method with result: " + 100);
+            return 100L;
+        }
     }
 
 }
