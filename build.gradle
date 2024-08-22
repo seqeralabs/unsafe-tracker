@@ -47,8 +47,15 @@ tasks.named('test') {
     useJUnitPlatform()
 }
 
-group = 'io.seqera'
-version = rootProject.file('VERSION').text.trim()
+String gitVersion() {
+    def p = new ProcessBuilder() .command('sh','-c','git rev-parse --short HEAD') .start()
+    def r = p.waitFor()
+    return r==0 ? p.text.trim() : '(unknown)'
+}
+
+group "io.seqera"
+version "${rootProject.file('VERSION').text.trim()}"
+ext.commitId = gitVersion()
 
 application {
     // Define the main class for the application.
@@ -88,3 +95,18 @@ publishing {
         }
     }
 }
+
+/** Update version number for backend app and modules */
+task buildInfo { doLast {
+    def info = """\
+                name=${project.name}
+                group=${project.group}
+                version=${version}
+                commitId=${project.property('commitId')}
+            """.stripIndent().toString()
+    def f = file("${buildDir}/resources/main/META-INF/build-info.properties")
+    f.parentFile.mkdirs()
+    f.text = info
+} }
+buildInfo.dependsOn processResources
+compileJava.dependsOn buildInfo

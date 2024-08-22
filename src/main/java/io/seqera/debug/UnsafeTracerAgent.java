@@ -24,7 +24,7 @@ import static net.bytebuddy.matcher.ElementMatchers.named;
 public class UnsafeTracerAgent {
 
     public static void premain(String agentArgs, Instrumentation inst) {
-        System.out.println("=== Starting UnsafeTracerAgent premain === args: " + agentArgs);
+        System.out.printf("=== Starting UnsafeTracerAgent version %s === args: %s\n", BuildInfo.getVersion(), agentArgs);
 
         AgentBuilder agent = new AgentBuilder.Default()
                 .ignore(ElementMatchers.none())
