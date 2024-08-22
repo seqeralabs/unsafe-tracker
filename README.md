@@ -10,7 +10,8 @@ The detection is made via a Java agent implemented by using [Byte Buddy](https:/
 
 ### Get started
 
-1. Create the agent jar file using this command:
+1. Download the agent jar file from the [releases](https://github.com/seqeralabs/unsafe-tracker/releases) page
+  or create it using the command below:
 
     ```
     ./gradlew jar
